@@ -101,7 +101,7 @@ class SearchPage extends StatelessWidget {
                                       ),
                                     ),
                                   ),
-                                  IconButton(icon: Icon(Icons.delete_outline), tooltip: "清除所有历史记录", onPressed: () => DBService.instance.deleteAllBrowsingHistory()),
+                                  IconButton(icon: Icon(Icons.delete_outline), tooltip: "清除所有历史记录", onPressed: () => DBService.instance.deleteAllSearchHistory()),
                                 ],
                               ),
                             ),
@@ -138,6 +138,31 @@ class SearchPage extends StatelessWidget {
               ),
             )),
             Obx(() => Offstage(offstage: controller.pageState.value != PageState.loading, child: Center(child: CircularProgressIndicator()))),
+Obx(() => Offstage(
+  offstage: controller.pageState.value != PageState.inFiveSecond,
+  child: Center(
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text("点那么快爬虫呢，这不是bug等5秒", textAlign: TextAlign.center),
+        const SizedBox(height: 8),
+        Obx(() {
+          final sec = controller.cooldownSeconds.value;
+          final kw = controller.pendingKeyword.value;
+          if (kw.isNotEmpty) {
+            return Text("请稍后 ${sec}s，将自动搜索：$kw", textAlign: TextAlign.center);
+          }
+          return Text("请稍后 ${sec}s", textAlign: TextAlign.center);
+        }),
+        const SizedBox(height: 12),
+        Obx(() => ElevatedButton(
+          onPressed: () => controller.getPage(false),
+          child: Text("重试"),
+        )),
+      ],
+    ),
+  ),
+)),
             Obx(() => Offstage(offstage: controller.pageState.value != PageState.empty, child: Center(child: Text("搜索内容为空")))),
             Obx(() => Offstage(offstage: controller.pageState.value != PageState.error, child: Center(child: Text(controller.errorMsg)))),
             Obx(() => Offstage(offstage: controller.pageState.value != PageState.jumpToOtherPage, child: Center(child: Text("已跳转至另一页面")))),

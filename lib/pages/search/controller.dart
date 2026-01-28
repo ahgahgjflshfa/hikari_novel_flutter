@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:easy_refresh/easy_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -21,6 +23,15 @@ class SearchController extends GetxController {
   RxList<String> searchHistory = RxList();
 
   Rx<PageState> pageState = Rx(PageState.pleaseSelect);
+
+  /// 站点会在短时间内频繁搜索时返回“出现错误！”页面。
+  /// 这里做一个简单的冷却，避免用户连续点搜索历史导致看起来“没反应”。
+  RxInt cooldownSeconds = 0.obs;
+  Timer? _cooldownTimer;
+
+  /// 冷却期间用户最后一次点的关键词（用于自动排队搜索）
+  RxString pendingKeyword = ''.obs;
+  int? _pendingSearchMode;
 
   String errorMsg = "";
 
@@ -59,10 +70,65 @@ class SearchController extends GetxController {
     Get.focusScope?.unfocus();
   }
 
+void _startCooldown() {
+  // 站点提示：两次搜索间隔不得少于 5 秒
+  _cooldownTimer?.cancel();
+  cooldownSeconds.value = 5;
+  _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+    if (cooldownSeconds.value <= 1) {
+      timer.cancel();
+      cooldownSeconds.value = 0;
+
+      // 冷却结束：恢复显示状态
+      if (pageState.value == PageState.inFiveSecond) {
+        pageState.value = data.isNotEmpty ? PageState.success : PageState.pleaseSelect;
+      }
+
+      // 冷却结束后：如果用户在冷却期点了新的搜索历史，自动执行“最后一次”
+      final kw = pendingKeyword.value;
+      final mode = _pendingSearchMode;
+      if (kw.isNotEmpty) {
+        pendingKeyword.value = '';
+        _pendingSearchMode = null;
+
+        // 恢复当时的模式（标题/作者）
+        if (mode != null) searchMode.value = mode;
+        keywordController.text = kw;
+        keywordController.selection = TextSelection.fromPosition(
+          TextPosition(offset: keywordController.text.length),
+        );
+
+        // 自动搜索最后一次点击的关键词
+        getPage(false);
+      }
+    } else {
+      cooldownSeconds.value -= 1;
+    }
+  });
+}
+
+
   Future<IndicatorResult> getPage(bool loadMore) async {
+// 冷却中：不再重复发请求；把“最后一次点击的关键词”排队，冷却结束后自动搜索
+if (!loadMore && cooldownSeconds.value > 0) {
+  pendingKeyword.value = keywordController.text;
+  _pendingSearchMode = searchMode.value;
+
+  Get.snackbar(
+    "提示",
+    "点那么快爬虫呢，这不是bug等5秒",
+    snackPosition: SnackPosition.BOTTOM,
+    duration: const Duration(seconds: 2),
+  );
+  return IndicatorResult.fail;
+}
     if (!loadMore) pageState.value = PageState.loading;
 
     if (!loadMore) {
+      // 新的搜索开始，清空排队提示
+      pendingKeyword.value = '';
+      _pendingSearchMode = null;
+
       DBService.instance.upsertSearchHistory(SearchHistoryEntityData(keyword: keywordController.text));
 
       data.clear();
@@ -87,6 +153,7 @@ class SearchController extends GetxController {
           if (Parser.isError(html)) {
             if (!loadMore) {
               pageState.value = PageState.inFiveSecond;
+              _startCooldown();
             } else {
               Get.dialog(
                 AlertDialog(
@@ -146,4 +213,10 @@ class SearchController extends GetxController {
         }
     }
   }
+@override
+void onClose() {
+  _cooldownTimer?.cancel();
+  keywordController.dispose();
+  super.onClose();
+}
 }
