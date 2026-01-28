@@ -5,7 +5,6 @@ import 'package:hikari_novel_flutter/models/novel_cover.dart';
 import 'package:hikari_novel_flutter/models/page_state.dart';
 import 'package:hikari_novel_flutter/models/resource.dart';
 import 'package:hikari_novel_flutter/network/parser.dart';
-import 'package:hikari_novel_flutter/router/app_sub_router.dart';
 
 import '../../common/database/database.dart';
 import '../../network/api.dart';
@@ -46,6 +45,18 @@ class SearchController extends GetxController {
       searchMode.value = 1;
       getPage(false);
     }
+  }
+
+  /// 点击“搜索历史”后直接触发搜索
+  void searchFromHistory(String keyword) {
+    keywordController.text = keyword;
+    keywordController.selection = TextSelection.fromPosition(
+      TextPosition(offset: keywordController.text.length),
+    );
+    // 直接执行搜索
+    getPage(false);
+    // 顺便收起键盘
+    Get.focusScope?.unfocus();
   }
 
   Future<IndicatorResult> getPage(bool loadMore) async {
@@ -89,10 +100,16 @@ class SearchController extends GetxController {
             return IndicatorResult.fail;
           }
 
+          // 站点在“只有 1 条搜索结果”时会返回一个特殊页面。
+          // 以前这里会自动跳转到详情页，但体验上会让用户
+          // （尤其是从“搜索历史”点进来时）无法先看到结果列表。
+          // 现在统一改为：即使只有 1 本，也先展示搜索结果列表，
+          // 让用户自己点一下再进入详情。
           var tempResult = Parser.isSearchResultOnlyOne(html);
           if (tempResult != null) {
-            AppSubRouter.toNovelDetail(aid: tempResult.aid);
-            pageState.value = PageState.jumpToOtherPage;
+            data.add(tempResult);
+            _maxNum = 1;
+            if (!loadMore) pageState.value = PageState.success;
             return IndicatorResult.noMore;
           }
           if (!loadMore) _maxNum = Parser.getMaxNum(html);

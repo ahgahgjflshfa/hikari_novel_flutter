@@ -35,5 +35,7 @@ class RoutePath {
 
   static const cacheQueue = "/cache_queue";
 
+  static const offlineBooks = "/offline_books";
+
   static const userBookshelf = "/user_bookshelf";
 }

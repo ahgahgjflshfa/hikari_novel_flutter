@@ -23,7 +23,7 @@ class Request {
   };
 
   static final _dioCookieJar = CookieJar();
-  static final Dio _dio = Dio(
+  static final Dio dio = Dio(
     BaseOptions(
       headers: userAgent,
       responseType: ResponseType.bytes, //使用bytes获取原始数据，方便解码
@@ -32,6 +32,7 @@ class Request {
     ),
   )..interceptors.add(CookieManager(_dioCookieJar));
 
+
   static final Dio _mewxWenku8Dio = Dio(
     BaseOptions(
       headers: {HttpHeaders.userAgentHeader: "Dalvik/2.1.0 (Linux; U; Android 15; 23114RD76B Build/AQ3A.240912.001)"},
@@ -39,13 +40,17 @@ class Request {
     ),
   )..interceptors.add(CookieManager(CookieJar()));
 
-  static String? get _cookie => LocalStorageService.instance.getCookie();
-
   static Map<String, String> _getMewxWenku8PostForm(String request) => {
-    "appver": "1.25-chibi-chapter-144c9c5",
+    "appver": "1.24-pico-mochi",
     "timetoken": DateTime.now().millisecondsSinceEpoch.toString(),
+    // IMPORTANT:
+    // The relay expects the `request` field to be Base64 of UTF-8 bytes.
+    // Using `String.codeUnits` would Base64-encode UTF-16 code units in Dart,
+    // which breaks non-ASCII characters (and can cause login/check-in to fail).
     "request": base64.encode(utf8.encode(request)),
   };
+
+  static String? get _cookie => LocalStorageService.instance.getCookie();
 
   ///获取通用数据（如其他网站的数据，即不用wenku8的cookie）
   /// - [url] 对应网站的url
@@ -74,7 +79,7 @@ class Request {
 
       Log.d("$url ${charsetsType.name}");
 
-      final response = await _dio.get(url, options: _cookie != null ? Options(headers: {..._dio.options.headers, "Cookie": _cookie}) : null);
+      final response = await dio.get(url, options: _cookie != null ? Options(headers: {...dio.options.headers, "Cookie": _cookie}) : null);
 
       //检查是否有重定向
       final html = await _checkRedirects(response);
@@ -101,9 +106,9 @@ class Request {
       if (location != null) {
         final cookies = await _dioCookieJar.loadForRequest(Uri.parse(location));
         final cookieHeader = cookies.map((cookie) => '${cookie.name}=${cookie.value}').join('; ');
-        final redirectedResponse = await _dio.get(
+        final redirectedResponse = await dio.get(
           "${Api.wenku8Node.node}/$location",
-          options: Options(headers: {..._dio.options.headers, 'Cookie': cookieHeader}),
+          options: Options(headers: {...dio.options.headers, 'Cookie': cookieHeader}),
         );
         return redirectedResponse.data;
       }
@@ -118,12 +123,12 @@ class Request {
   /// - [charsetsType] response解码的方式
   static Future<Resource> postForm(String url, {required Object? data, required CharsetsType charsetsType}) async {
     try {
-      final response = await _dio.post(
+      final response = await dio.post(
         url,
         data: data,
         options: _cookie != null
             ? Options(
-                headers: {..._dio.options.headers, "Cookie": _cookie},
+                headers: {...dio.options.headers, "Cookie": _cookie},
                 contentType: Headers.formUrlEncodedContentType, //设置为application/x-www-form-urlencoded
               )
             : null,
@@ -176,22 +181,4 @@ class Request {
     }
   }
 
-  static Future<Response> postFormToMewxWenku8Directly({required String request, required CharsetsType charsetsType, required CancelToken cancelToken}) {
-    switch (charsetsType) {
-      case CharsetsType.gbk:
-        request += "&t=0";
-        break;
-      case CharsetsType.big5Hkscs:
-        request += "&t=1";
-        break;
-    }
-    return _mewxWenku8Dio.post(
-      "https://wenku8-relay.mewx.org",
-      data: _getMewxWenku8PostForm(request),
-      options: Options(
-        contentType: Headers.formUrlEncodedContentType, //设置为application/x-www-form-urlencoded
-        responseType: ResponseType.plain,
-      ),
-    );
-  }
 }

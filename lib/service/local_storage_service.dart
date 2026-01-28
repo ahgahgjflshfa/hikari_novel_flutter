@@ -23,6 +23,7 @@ class LocalStorageService extends GetxService {
       kUserInfo = "user_info",
       kUsername = "username",
       kPassword = "password",
+      kBiometricCheckInEnabled = "biometricCheckInEnabled",
       kLanguage = "language",
       kIsAutoCheckUpdate = "isAutoCheckUpdate",
       kWenku8Node = "wenku8Node",
@@ -79,6 +80,10 @@ class LocalStorageService extends GetxService {
   void setPassword(String value) => _loginInfo.put(kPassword, value);
 
   String? getPassword() => _loginInfo.get(kPassword);
+
+  void setBiometricCheckInEnabled(bool enabled) => _setting.put(kBiometricCheckInEnabled, enabled);
+
+  bool getBiometricCheckInEnabled() => _setting.get(kBiometricCheckInEnabled, defaultValue: false);
 
   void setIsAutoCheckUpdate(bool enabled) => _setting.put(kIsAutoCheckUpdate, enabled);
 

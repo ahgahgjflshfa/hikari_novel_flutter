@@ -95,7 +95,7 @@ class SearchPage extends StatelessWidget {
                                         itemBuilder: (context, index) {
                                           return ActionChip(
                                             label: Text(controller.searchHistory[index], style: TextStyle(fontSize: 13)),
-                                            onPressed: () => controller.keywordController.text = controller.searchHistory[index],
+                                onPressed: () => controller.searchFromHistory(controller.searchHistory[index]),
                                           );
                                         },
                                       ),

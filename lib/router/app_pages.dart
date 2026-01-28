@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hikari_novel_flutter/pages/about/view.dart';
 import 'package:hikari_novel_flutter/pages/cache_queue/view.dart';
+import 'package:hikari_novel_flutter/pages/offline_books/view.dart';
 import 'package:hikari_novel_flutter/pages/comment/view.dart';
 import 'package:hikari_novel_flutter/pages/home/view.dart';
 import 'package:hikari_novel_flutter/pages/login/view.dart';
@@ -71,6 +72,8 @@ class AppRoutes {
         }
       case RoutePath.cacheQueue:
         return GetPageRoute(settings: settings, page: () => CacheQueuePage());
+      case RoutePath.offlineBooks:
+        return GetPageRoute(settings: settings, page: () => OfflineBooksPage());
       default:
         return null;
     }
