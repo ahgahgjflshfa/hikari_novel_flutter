@@ -19,6 +19,7 @@ class SearchPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: NestedScrollView(
         headerSliverBuilder:
             (context, innerBoxIsScrolled) => [
@@ -115,6 +116,7 @@ class SearchPage extends StatelessWidget {
             ],
         body: Stack(
           children: [
+            Positioned.fill(child: ColoredBox(color: Theme.of(context).scaffoldBackgroundColor)),
             Obx(() => Offstage(
               offstage: controller.pageState.value != PageState.success,
               child: Padding(
