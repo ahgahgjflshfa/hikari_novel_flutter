@@ -32,7 +32,7 @@ class _LoginFormPageState extends State<LoginFormPage> {
     super.dispose();
   }
 
-  @override
+    @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
@@ -41,98 +41,99 @@ class _LoginFormPageState extends State<LoginFormPage> {
           children: [
             Center(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                // Keep extra bottom space so the fixed "go to web" button never covers
+                // the login CTA (prevents mis-taps).
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 96),
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 420),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Top logo (horizontally centered)
-                      Center(
-                        child: Image.asset(
-                          'assets/images/logo_transparent.png',
-                          width: 140,
-                          height: 140,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'HiKari Novel',
-                        textAlign: TextAlign.center,
-                        style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w600),
-                      ),
-                      const SizedBox(height: 24),
-                      TextField(
-                        controller: _usernameCtrl,
-                        textInputAction: TextInputAction.next,
-                        autofillHints: const [AutofillHints.username],
-                        decoration: InputDecoration(
-                          labelText: 'username'.tr,
-                          border: const OutlineInputBorder(),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: _passwordCtrl,
-                        obscureText: true,
-                        textInputAction: TextInputAction.done,
-                        autofillHints: const [AutofillHints.password],
-                        decoration: InputDecoration(
-                          labelText: 'password'.tr,
-                          border: const OutlineInputBorder(),
-                        ),
-                        onSubmitted: (_) => _onLogin(),
-                      ),
-                      const SizedBox(height: 12),
-                      DropdownButtonFormField<String>(
-                        value: _usecookieSeconds,
-                        decoration: InputDecoration(
-                          labelText: 'login_validity'.tr,
-                          border: const OutlineInputBorder(),
-                        ),
-                        items: [
-                          DropdownMenuItem(value: "0", child: Text('only_once'.tr)),
-                          DropdownMenuItem(value: "86400", child: Text('one_day'.tr)),
-                          DropdownMenuItem(value: "2592000", child: Text('one_month'.tr)),
-                          DropdownMenuItem(value: "315360000", child: Text('one_year'.tr)),
-                        ],
-                        onChanged: (v) {
-                          if (v == null) return;
-                          setState(() => _usecookieSeconds = v);
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      Obx(
-                        () => FilledButton.icon(
-                          onPressed: controller.isSubmitting.value ? null : _onLogin,
-                          icon: controller.isSubmitting.value
-                              ? const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
-                                )
-                              : const Icon(Icons.login),
-                          label: Text(controller.isSubmitting.value ? 'logging_in'.tr : 'login'.tr),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'login_form_tip'.tr,
-                        textAlign: TextAlign.center,
-                        style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline),
-                      ),
-                    ],
+                  // Top logo (horizontally centered)
+                  Center(
+                    child: Image.asset(
+                      'assets/images/logo_transparent.png',
+                      width: 140,
+                      height: 140,
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'HiKari Novel',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 24),
+                  TextField(
+                    controller: _usernameCtrl,
+                    textInputAction: TextInputAction.next,
+                    autofillHints: const [AutofillHints.username],
+                    decoration: InputDecoration(
+                      labelText: 'username'.tr,
+                      border: const OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _passwordCtrl,
+                    obscureText: true,
+                    textInputAction: TextInputAction.done,
+                    autofillHints: const [AutofillHints.password],
+                    decoration: InputDecoration(
+                      labelText: 'password'.tr,
+                      border: const OutlineInputBorder(),
+                    ),
+                    onSubmitted: (_) => _onLogin(),
+                  ),
+                  const SizedBox(height: 12),
+                  InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap: _showValiditySheet,
+                    child: InputDecorator(
+                      decoration: InputDecoration(
+                        labelText: 'login_validity'.tr,
+                        border: const OutlineInputBorder(),
+                        isDense: true,
+                        suffixIcon: const Icon(Icons.arrow_drop_down),
+                      ),
+                      child: Text(_validityLabel(_usecookieSeconds)),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Obx(
+                    () => FilledButton.icon(
+                      onPressed: controller.isSubmitting.value ? null : _onLogin,
+                      icon: controller.isSubmitting.value
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.login),
+                      label: Text(controller.isSubmitting.value ? 'logging_in'.tr : 'login'.tr),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'login_form_tip'.tr,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline),
+                  ),
+                  const SizedBox(height: 8),
+                ],
               ),
             ),
-
-            // Bottom-left: WebView login fallback button
+          ),
+            // Fixed bottom-left entry, matching the original layout.
             Positioned(
               left: 12,
-              bottom: 12,
+              bottom: 8,
               child: TextButton.icon(
+                style: TextButton.styleFrom(
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                ),
                 onPressed: () => Get.toNamed(RoutePath.webLogin),
                 icon: const Icon(Icons.public),
                 label: Text('go_to_web_login'.tr),
@@ -141,6 +142,58 @@ class _LoginFormPageState extends State<LoginFormPage> {
           ],
         ),
       ),
+    );
+  }
+  String _validityLabel(String seconds) {
+    switch (seconds) {
+      case "0":
+        return 'only_once'.tr;
+      case "86400":
+        return 'one_day'.tr;
+      case "2592000":
+        return 'one_month'.tr;
+      case "315360000":
+        return 'one_year'.tr;
+      default:
+        return seconds;
+    }
+  }
+
+  void _showValiditySheet() {
+    FocusScope.of(context).unfocus();
+
+    final items = <MapEntry<String, String>>[
+      const MapEntry("0", "only_once"),
+      const MapEntry("86400", "one_day"),
+      const MapEntry("2592000", "one_month"),
+      const MapEntry("315360000", "one_year"),
+    ];
+
+    showModalBottomSheet<void>(
+      context: context,
+      useSafeArea: true,
+      showDragHandle: true,
+      builder: (context) {
+        return ListView.separated(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          shrinkWrap: true,
+          itemCount: items.length,
+          separatorBuilder: (_, __) => const Divider(height: 1),
+          itemBuilder: (context, index) {
+            final value = items[index].key;
+            final labelKey = items[index].value;
+            final selected = value == _usecookieSeconds;
+            return ListTile(
+              title: Text(labelKey.tr),
+              trailing: selected ? const Icon(Icons.check) : null,
+              onTap: () {
+                setState(() => _usecookieSeconds = value);
+                Navigator.of(context).pop();
+              },
+            );
+          },
+        );
+      },
     );
   }
 

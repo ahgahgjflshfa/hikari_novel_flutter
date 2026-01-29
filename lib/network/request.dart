@@ -50,9 +50,13 @@ class Request {
     "request": base64.encode(utf8.encode(request)),
   };
 
-  static String? get _cookie => LocalStorageService.instance.getCookie();
+  static String? _sessionCookie;
 
-  /// Clear in-memory cookie jar used by [dio].
+  static void setSessionCookie(String? value) => _sessionCookie = value;
+  static void clearSessionCookie() => _sessionCookie = null;
+
+  static String? get _cookie => _sessionCookie ?? LocalStorageService.instance.getCookie();
+/// Clear in-memory cookie jar used by [dio].
   ///
   /// This does NOT touch the persisted cookie stored in [LocalStorageService].
   static Future<void> clearCookieJar() async {
@@ -61,6 +65,8 @@ class Request {
     } catch (_) {
       // ignore
     }
+    // Also clear any runtime-only cookie.
+    _sessionCookie = null;
   }
 
   /// Get cookies currently held in Dio cookie jar for a given URL.

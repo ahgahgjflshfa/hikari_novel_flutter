@@ -75,8 +75,16 @@ class LoginFormController extends GetxController {
       }
 
       final cookieHeader = cookies.map((c) => "${c.name}=${c.value}").join("; ");
-      LocalStorageService.instance.setCookie(cookieHeader);
-      LocalStorageService.instance.setUsername(username);
+       if (usecookieSeconds == "0") {
+         // "Only once" session: keep cookie in memory only; do NOT persist to disk.
+         Request.setSessionCookie(cookieHeader);
+         LocalStorageService.instance.setCookie(null);
+       } else {
+         // Persist cookie for auto-login on next app launch.
+         LocalStorageService.instance.setCookie(cookieHeader);
+       }
+       // Username/password can still be saved for convenience. They do NOT auto-login by themselves.
+       LocalStorageService.instance.setUsername(username);
       LocalStorageService.instance.setPassword(password);
 
       await _getUserInfo();
