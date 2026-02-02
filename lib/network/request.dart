@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -32,30 +31,7 @@ class Request {
     ),
   )..interceptors.add(CookieManager(_dioCookieJar));
 
-
-  static final Dio _mewxWenku8Dio = Dio(
-    BaseOptions(
-      headers: {HttpHeaders.userAgentHeader: "Dalvik/2.1.0 (Linux; U; Android 15; 23114RD76B Build/AQ3A.240912.001)"},
-      responseType: ResponseType.bytes, //使用bytes获取原始数据，方便解码
-    ),
-  )..interceptors.add(CookieManager(CookieJar()));
-
-  static Map<String, String> _getMewxWenku8PostForm(String request) => {
-    "appver": "1.24-pico-mochi",
-    "timetoken": DateTime.now().millisecondsSinceEpoch.toString(),
-    // IMPORTANT:
-    // The relay expects the `request` field to be Base64 of UTF-8 bytes.
-    // Using `String.codeUnits` would Base64-encode UTF-16 code units in Dart,
-    // which breaks non-ASCII characters (and can cause login/check-in to fail).
-    "request": base64.encode(utf8.encode(request)),
-  };
-
-  static String? _sessionCookie;
-
-  static void setSessionCookie(String? value) => _sessionCookie = value;
-  static void clearSessionCookie() => _sessionCookie = null;
-
-  static String? get _cookie => _sessionCookie ?? LocalStorageService.instance.getCookie();
+  static String? get _cookie => LocalStorageService.instance.getCookie();
 /// Clear in-memory cookie jar used by [dio].
   ///
   /// This does NOT touch the persisted cookie stored in [LocalStorageService].
@@ -65,8 +41,7 @@ class Request {
     } catch (_) {
       // ignore
     }
-    // Also clear any runtime-only cookie.
-    _sessionCookie = null;
+    // Best-effort only.
   }
 
   
@@ -228,36 +203,6 @@ class Request {
           }
       }
       return Success(decodedHtml);
-    } catch (e) {
-      Log.e(e.toString());
-      return Error(e);
-    }
-  }
-
-  /// 以post方法向mewx的中转站进行http请求
-  /// body以Content-Type: application/x-www-form-urlencoded的形式进行发送
-  /// - [request] 要请求的内容（以base64形式进行编码）
-  /// - [charsetsType] response解码的方式
-  static Future<Resource> postFormToMewxWenku8(String request, {required CharsetsType charsetsType}) async {
-    try {
-      switch (charsetsType) {
-        case CharsetsType.gbk:
-          request += "&t=0";
-          break;
-        case CharsetsType.big5Hkscs:
-          request += "&t=1";
-          break;
-      }
-
-      final response = await _mewxWenku8Dio.post(
-        "https://wenku8-relay.mewx.org",
-        data: _getMewxWenku8PostForm(request),
-        options: Options(
-          contentType: Headers.formUrlEncodedContentType, //设置为application/x-www-form-urlencoded
-          responseType: ResponseType.plain,
-        ),
-      );
-      return Success(response.data);
     } catch (e) {
       Log.e(e.toString());
       return Error(e);
