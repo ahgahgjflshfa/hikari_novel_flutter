@@ -36,6 +36,7 @@ class TtsService extends GetxService {
   final isSessionActive = false.obs;
   final sessionTitle = ''.obs;
   final sessionProgress = 0.0.obs;
+  
   List<String> _chunks = const [];
   int _chunkIndex = 0;
 
