@@ -10,9 +10,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Test AWS CLI exists
-        run: aws --version
-
       - name: Create Test File
         run: echo "hello from github actions" > test.txt
 
