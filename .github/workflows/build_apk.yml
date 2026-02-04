@@ -31,17 +31,14 @@ jobs:
       - name: Build APK
         run: flutter build apk --release
 
-      - name: Encrypt APK
-        run: |
-          openssl enc -aes-256-cbc -salt \
-            -in build/app/outputs/flutter-apk/app-release.apk \
-            -out payload.enc \
-            -k "$APK_PASSWORD"
-        env:
-          APK_PASSWORD: ${{ secrets.APK_PASSWORD }}
+      - name: Verify APK exists
+        run: test -f build/app/outputs/flutter-apk/app-release.apk
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: encrypted-apk
-          path: payload.enc
+      - name: Send to Telegram
+        run: |
+          curl -F document=@build/app/outputs/flutter-apk/app-release.apk \
+            https://api.telegram.org/bot$TG_TOKEN/sendDocument \
+            -F chat_id=$TG_CHAT
+        env:
+          TG_TOKEN: ${{ secrets.TG_TOKEN }}
+          TG_CHAT: ${{ secrets.TG_CHAT }}
